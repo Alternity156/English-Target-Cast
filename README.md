@@ -1,78 +1,44 @@
-> ⚠️ **Don't click Fork!**
-> 
-> This is a GitHub Template repo. If you want to use this for a plugin, [use this template][new-repo] to make a new repo!
->
-> ![image](https://github.com/goatcorp/SamplePlugin/assets/16760685/d9732094-e1ed-4769-a70b-58ed2b92580c)
+# English Target Cast
 
-# EnglishTargetCast
+A [Dalamud](https://github.com/goatcorp/Dalamud) plugin for Final Fantasy XIV that shows the names on your target's cast bar in **English**, whatever language your game client uses.
 
-[![Use This Template badge](https://img.shields.io/badge/Use%20This%20Template-0?logo=github&labelColor=grey)][new-repo]
+Handy if you play on a Japanese, German or French client but learned the fights (or watch guides) in English.
 
+## Features
 
-Simple example plugin for Dalamud.
+- Translates the cast bar for your **target** (both the built-in cast bar and the split one from HUD Layout) and your **focus target**.
+- Covers regular actions, items, key items, object interactions (like "Opening") and mounts.
+- Uses the English text that ships with every global client, so it needs no internet connection or translation service.
+- Only replaces text it recognizes as the current cast's name, so things like "Interrupted" are left alone.
+- Does nothing on an English client.
 
-This is not designed to be the simplest possible example, but it is also not designed to cover everything you might want to do. For more detailed questions, come ask in [the Discord](https://discord.gg/holdshift).
+## Usage
 
-## Main Points
+- `/englishcast` opens the settings, where you can turn the target and focus target cast bars on or off separately.
+- The settings are also available from the plugin's entry in `/xlplugins`.
 
-* Simple functional plugin
-  * Slash command
-  * Main UI
-  * Settings UI
-  * Image loading
-  * Plugin json
-* Simple, slightly-improved plugin configuration handling
-* Project organization
-  * Copies all necessary plugin files to the output directory
-    * Does not copy dependencies that are provided by dalamud
-    * Output directory can be zipped directly and have exactly what is required
-  * Hides data files from visual studio to reduce clutter
-    * Also allows having data files in different paths than VS would usually allow if done in the IDE directly
-
-
-The intention is less that any of this is used directly in other projects, and more to show how similar things can be done.
-
-## How To Use
-
-### Getting Started
-
-To begin, [clone this template repository][new-repo] to your own GitHub account. This will automatically bring in everything you need to get a jumpstart on development. You do not need to fork this repository unless you intend to contribute modifications to it.
-
-Be sure to also check out the [Dalamud Developer Docs][dalamud-docs] for helpful information about building your own plugin. The Developer Docs includes helpful information about all sorts of things, including [how to submit][submit] your newly-created plugin to the official repository. Assuming you use this template repository, the provided project build configuration and license are already chosen to make everything a breeze.
-
-[new-repo]: https://github.com/new?template_name=SamplePlugin&template_owner=goatcorp
-[dalamud-docs]: https://dalamud.dev
-[submit]: https://dalamud.dev/plugin-publishing/submission
+## Building
 
 ### Prerequisites
 
-EnglishTargetCast assumes all the following prerequisites are met:
+- [XIVLauncher](https://goatcorp.github.io/) with Dalamud, and the game run through it at least once (this also keeps Dalamud up to date, which the build depends on).
+- [.NET 10 SDK](https://dotnet.microsoft.com/download).
+- An IDE such as Visual Studio 2022 or newer, or JetBrains Rider.
 
-* XIVLauncher, FINAL FANTASY XIV, and Dalamud have all been installed and the game has been run with Dalamud at least once.
-* XIVLauncher is installed to its default directories and configurations.
-  * If a custom path is required for Dalamud's dev directory, it must be set with the `DALAMUD_HOME` environment variable.
-* A .NET Core 8 SDK has been installed and configured, or is otherwise available. (In most cases, the IDE will take care of this.)
+### Build and load
 
-### Building
+1. Open `EnglishTargetCast.slnx` and build. The plugin ends up in `EnglishTargetCast/bin/x64/Debug/EnglishTargetCast/EnglishTargetCast.dll` (or `Release`).
+2. In game, run `/xlsettings`, go to **Experimental** and add the full path to `EnglishTargetCast.dll` under **Dev Plugin Locations**.
+3. Run `/xlplugins`, go to **Dev Tools > Installed Dev Plugins** and enable **English Target Cast**.
 
-1. Open up `EnglishTargetCast.slnx` in your C# editor of choice (likely [Visual Studio](https://visualstudio.microsoft.com) or [JetBrains Rider](https://www.jetbrains.com/rider/)).
-2. Build the solution. By default, this will build a `Debug` build, but you can switch to `Release` in your IDE.
-3. The resulting plugin can be found at `EnglishTargetCast/bin/x64/Debug/EnglishTargetCast.dll` (or `Release` if appropriate.)
+After that, rebuilding and reloading the plugin from `/xlplugins` is enough; no need to restart the game.
 
-### Activating in-game
+## Troubleshooting
 
-1. Launch the game and use `/xlsettings` in chat or `xlsettings` in the Dalamud Console to open up the Dalamud settings.
-    * In here, go to `Experimental`, and add the full path to the `EnglishTargetCast.dll` to the list of Dev Plugin Locations.
-2. Next, use `/xlplugins` (chat) or `xlplugins` (console) to open up the Plugin Installer.
-    * In here, go to `Dev Tools > Installed Dev Plugins`, and the `EnglishTargetCast` should be visible. Enable it.
-3. You should now be able to use `/pmycommand` (chat) or `pmycommand` (console)!
+If a cast name stays in your client language, open `/xllog`, set the log level to **Debug** and look for lines starting with `Cast bar shows`. They show what the cast bar displayed and what the plugin expected.
 
-Note that you only need to add it to the Dev Plugin Locations once (Step 1); it is preserved afterwards. You can disable, enable, or load your plugin on startup through the Plugin Installer.
+After a game patch, the cast bar's layout can change. The text node IDs are at the top of `EnglishTargetCast/CastBarTranslator.cs` and can be checked in game with `/xldev` > **Addon Inspector**.
 
-### Reconfiguring for your own uses
+## License
 
-Replace all references to `SamplePlugin` in all the files and filenames with your desired name, then start building the plugin of your dreams. You'll figure it out 😁
-
-Dalamud will load the JSON file (by default, `SamplePlugin/SamplePlugin.json`) next to your DLL and use it for metadata, including the description for your plugin in the Plugin Installer. Make sure to update this with information relevant to _your_ plugin!
-
-All participation in this repository is governed by our [Code of Conduct](https://dalamud.dev/code-of-conduct). If you used AI tooling at any point, review the [AI Usage Policy](https://dalamud.dev/plugin-publishing/ai-policy) and disclose your level of AI use. Entirely AI-generated submissions will be rejected, and undisclosed AI use may result in a ban.
+[AGPL-3.0](LICENSE.md), as required for Dalamud plugins. Based on goatcorp's [SamplePlugin](https://github.com/goatcorp/SamplePlugin) template.
