@@ -44,10 +44,17 @@ public sealed unsafe class CastBarTranslator : IDisposable
     // A null value means "no usable name for this cast", which is also worth remembering.
     private readonly Dictionary<(ActionType Type, uint Id), CastName?> nameCache = [];
 
+    // The last translation made on each addon. The game can reset the cast bar text in the middle
+    // of a cast (most noticeable on long casts), so this is used to put the English name straight back.
+    private readonly Dictionary<string, Translation> lastTranslation = [];
+
     private bool errorLogged;
     private string? lastMismatch;
 
     private sealed record CastName(string Client, string English, byte[] EnglishUtf8);
+
+    /// <param name="OriginalText">The exact text the game had put on the cast bar before it was replaced.</param>
+    private sealed record Translation(byte[] OriginalText, CastName Name);
 
     public CastBarTranslator(Configuration config)
     {
@@ -91,45 +98,59 @@ public sealed unsafe class CastBarTranslator : IDisposable
         {
             case SplitCastBarAddon when config.TranslateTarget:
                 // The target bar shows your hard target, or your soft target if you have no hard target.
-                Translate(addon, SplitCastBarTextNodeId, Plugin.TargetManager.Target, Plugin.TargetManager.SoftTarget);
+                Translate(addon, SplitCastBarAddon, SplitCastBarTextNodeId, Plugin.TargetManager.Target, Plugin.TargetManager.SoftTarget);
                 break;
 
             case TargetInfoAddon when config.TranslateTarget:
-                Translate(addon, TargetInfoTextNodeId, Plugin.TargetManager.Target, Plugin.TargetManager.SoftTarget);
+                Translate(addon, TargetInfoAddon, TargetInfoTextNodeId, Plugin.TargetManager.Target, Plugin.TargetManager.SoftTarget);
                 break;
 
             case FocusTargetAddon when config.TranslateFocusTarget:
-                Translate(addon, FocusTargetTextNodeId, Plugin.TargetManager.FocusTarget, null);
+                Translate(addon, FocusTargetAddon, FocusTargetTextNodeId, Plugin.TargetManager.FocusTarget, null);
                 break;
         }
     }
 
-    private void Translate(AtkUnitBase* addon, uint textNodeId, IGameObject? first, IGameObject? second)
+    private void Translate(AtkUnitBase* addon, string addonName, uint textNodeId, IGameObject? first, IGameObject? second)
     {
         var textNode = addon->GetTextNodeById(textNodeId);
         if (textNode == null || !textNode->IsVisible())
             return;
 
-        // Try the hard target first, then the soft target.
-        if (!TryTranslate(textNode, first))
-            TryTranslate(textNode, second);
+        var shownBytes = textNode->NodeText.AsSpan();
+
+        if (lastTranslation.TryGetValue(addonName, out var last))
+        {
+            // Still showing our English name: nothing to do. Fast byte check, no allocation.
+            if (shownBytes.SequenceEqual(last.Name.EnglishUtf8))
+                return;
+
+            // The game put back the exact text we replaced. Restore the English name without
+            // checking the target again, since its cast state isn't reliable this late in a cast.
+            if (shownBytes.SequenceEqual(last.OriginalText))
+            {
+                textNode->SetText(last.Name.English);
+                return;
+            }
+        }
+
+        // New text on the cast bar: try the hard target first, then the soft target.
+        var translation = TryTranslate(textNode, first) ?? TryTranslate(textNode, second);
+        if (translation != null)
+            lastTranslation[addonName] = translation;
     }
 
-    /// <returns>True if the text node is now showing this object's cast in English.</returns>
-    private bool TryTranslate(AtkTextNode* textNode, IGameObject? obj)
+    /// <returns>The translation that was applied, or null if the text was left alone.</returns>
+    private Translation? TryTranslate(AtkTextNode* textNode, IGameObject? obj)
     {
         if (obj is not IBattleChara caster || !caster.IsCasting)
-            return false;
+            return null;
 
         var name = GetCastName((ActionType)caster.CastActionType, caster.CastActionId);
         if (name == null)
-            return false;
+            return null;
 
         var shownBytes = textNode->NodeText.AsSpan();
-
-        // Already English (we changed it on an earlier frame). Fast byte check, no allocation.
-        if (shownBytes.SequenceEqual(name.EnglishUtf8))
-            return true;
 
         // Only replace the text if it really is this cast's name in the client language.
         // This guards against replacing something else, like the "Interrupted" text,
@@ -144,11 +165,13 @@ public sealed unsafe class CastBarTranslator : IDisposable
                 Plugin.Log.Debug($"Cast bar shows \"{shown}\", expected \"{name.Client}\". Leaving it alone.");
             }
 
-            return false;
+            return null;
         }
 
+        // Copy the original text first: SetText overwrites the buffer shownBytes points into.
+        var translation = new Translation(shownBytes.ToArray(), name);
         textNode->SetText(name.English);
-        return true;
+        return translation;
     }
 
     private CastName? GetCastName(ActionType type, uint id)
