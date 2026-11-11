@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
   <PropertyGroup>
-    <Version>0.0.0.1</Version>
+    <Version>1.0.0.0</Version>
     <!-- Manifest fields (see https://github.com/goatcorp/DalamudPackager/blob/827d88dc/DalamudPackager/DalamudPackager.cs#L420) -->
     <Author>Alternity156</Author>
     <Name>English Target Cast</Name>
@@ -11,4 +11,11 @@
     <Tags>ui;castbar;translation;english</Tags>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- Copies the plugin icon next to the DLL, where Dalamud looks for it when loading a dev plugin. -->
+    <Content Include="..\images\icon.png" Link="images\icon.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </Content>
+  </ItemGroup>
 </Project>
