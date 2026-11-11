@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Dalamud.NET.Sdk/15.0.0">
+  <PropertyGroup>
+    <Version>0.0.0.1</Version>
+    <!-- Manifest fields (see https://github.com/goatcorp/DalamudPackager/blob/827d88dc/DalamudPackager/DalamudPackager.cs#L420) -->
+    <Author>your name here</Author>
+    <Name>English Target Cast</Name>
+    <Punchline>Shows your target's cast bar in English, whatever your client language.</Punchline>
+    <Description>Replaces the action name on the target and focus target cast bars with its English name, using the game's own English data. Useful when playing on a Japanese, German or French client.</Description>
+    <RepoUrl>https://github.com/goatcorp/SamplePlugin</RepoUrl>
+    <Tags>ui;castbar;translation;english</Tags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="..\Data\goat.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </Content>
+  </ItemGroup>
+</Project>
